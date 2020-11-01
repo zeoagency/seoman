@@ -1,0 +1,2 @@
+isort seoman
+black seoman 

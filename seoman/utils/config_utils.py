@@ -1,0 +1,26 @@
+from typing import List
+
+ALL_GRANULARITIES: List[str] = [
+    "daily",
+    "twodaily",
+    "threedaily",
+    "fourdaily",
+    "fivedaily",
+    "sixdaily",
+    "weekly",
+    "twoweekly",
+    "threeweekly",
+    "monthly",
+    "twomonthly",
+    "quarterly",
+    "yearly",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+    "weekends",
+    "weekdays",
+]
