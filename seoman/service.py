@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import IO, Any, Dict, List, Optional, Tuple, Union
 
 import typer  # type: ignore
-from click import progressbar
+from click import progressbar  # type: ignore
 
 from .exceptions import FolderNotFoundError
 from .utils.date_utils import create_date, days_last_util, get_today
@@ -89,7 +89,8 @@ class SearchAnalytics:
                 for body in bod:
                     await con_query(body, query_type=query_type)
 
-        asyncio.run(main(body_list=bodies, message="Fetching data", query_type="first"))
+        asyncio.run(
+            main(body_list=bodies, message="Fetching data", query_type="first"))
 
         if len(extra_bodies) >= 1:
             confirm_rows = typer.confirm(
@@ -190,7 +191,8 @@ class SearchAnalytics:
             )
 
         elif url:
-            self.data.update(self.service.sitemaps().list(siteUrl=url).execute())
+            self.data.update(
+                self.service.sitemaps().list(siteUrl=url).execute())
 
     def export(
         self, command: str, export_type: Optional[str] = None, url: str = None,
@@ -233,7 +235,8 @@ class SearchAnalytics:
 
         elif export_type == "tsv":
             export_data.export_to_tsv(
-                filename=self._create_filename(url=url, command=command, filetype="tsv")
+                filename=self._create_filename(
+                    url=url, command=command, filetype="tsv")
             )
 
         elif export_type == "table":
@@ -283,7 +286,8 @@ class SearchAnalytics:
                     [
                         __clean_url(url),
                         command,
-                        datetime.now().strftime("%d-%B-%Y-%H-%M") + f".{filetype}",
+                        datetime.now().strftime(
+                            "%d-%B-%Y-%H-%M") + f".{filetype}",
                     ]
                 )
 
@@ -335,10 +339,12 @@ class SearchAnalytics:
             if key == "dimensions":
                 if "all" in value:
                     self.update_body(
-                        {"dimensions": ["date", "page", "query", "country", "device"]}
+                        {"dimensions": ["date", "page",
+                                        "query", "country", "device"]}
                     )
                 else:
-                    self.body.update({"dimensions": [dimension for dimension in value]})
+                    self.body.update(
+                        {"dimensions": [dimension for dimension in value]})
 
             if key == "filters":
                 self.body.update(
@@ -347,8 +353,10 @@ class SearchAnalytics:
                             {
                                 "filters": [
                                     {
-                                        "dimension": filters.split()[0],  # Country
-                                        "operator": filters.split()[1],  # Equals
+                                        # Country
+                                        "dimension": filters.split()[0],
+                                        # Equals
+                                        "operator": filters.split()[1],
                                         "expression": " ".join(
                                             filters.split()[2:]
                                         ),  # FRA

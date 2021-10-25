@@ -120,8 +120,8 @@ def granularity_days(
 
 def create_date_range(
     days: Optional[int] = None,
-    start: Optional[Union[str, date, datetime]] = None,
-    end: Optional[Union[str, date, datetime]] = None,
+    start: Optional[str] = None,
+    end: Optional[str] = None,
     granularity: Optional[str] = None,
 ) -> List[str]:
     """
@@ -139,9 +139,9 @@ def create_date_range(
 
         new_end, new_start = (
             datetime.strptime(
-                end, "%Y-%m-%d").date() if isinstance(end, str) else end + timedelta(days=1),
+                end, "%Y-%m-%d").date() + timedelta(days=1),
             datetime.strptime(
-                start, "%Y-%m-%d").date() if isinstance(start, str) else start,
+                start, "%Y-%m-%d").date(),
         )
 
         day_diff = (new_end - new_start).days
@@ -228,7 +228,7 @@ def get_weekday_by_name(day_name: str) -> int:
     }.get(day_name, 10)
 
 
-def process_date(dt: Union[str, date, datetime], which_date: str) -> Union[str, int]:
+def process_date(dt: str, which_date: str) -> Union[str, int]:
     """
     Process human readable datetime strings, to date objects then to str in %Y-%m-%d fmt.
     2 months ago -> datetime.date(2020, 7, 22) -> '2020-07-22'
@@ -236,35 +236,37 @@ def process_date(dt: Union[str, date, datetime], which_date: str) -> Union[str, 
     retry = 0
     max_retry = 3
     parse = dt
-    while retry < max_retry:
-        try:
-            new_dt = dateparser.parse(parse).strftime("%Y-%m-%d")
-            return new_dt
+    if dt:
+        while retry < max_retry:
+            try:
+                new_dt = dateparser.parse(parse)
+                if new_dt:
+                    return new_dt.strftime("%Y-%m-%d")
 
-        except Exception:
-            typer.secho(
-                """There must be a problem with your date or the language is not supported yet.""",
-                bold=True,
-                fg=typer.colors.BRIGHT_RED,
-            )
-            typer.secho(
-                """Try entering in YYYY-MM-DD format.""",
-                bold=True,
-                fg=typer.colors.BRIGHT_RED,
-            )
-            enter_new = typer.confirm(
-                f"Do you want to enter a new {which_date} date?", default=True
-            )
-            if enter_new is False:
+            except Exception:
                 typer.secho(
-                    "Aborting...", bold=True, fg=typer.colors.BRIGHT_RED,
+                    """There must be a problem with your date or the language is not supported yet.""",
+                    bold=True,
+                    fg=typer.colors.BRIGHT_RED,
                 )
-                sys.exit()
-            else:
-                parse = typer.prompt("Enter here")
+                typer.secho(
+                    """Try entering in YYYY-MM-DD format.""",
+                    bold=True,
+                    fg=typer.colors.BRIGHT_RED,
+                )
+                enter_new = typer.confirm(
+                    f"Do you want to enter a new {which_date} date?", default=True
+                )
+                if enter_new is False:
+                    typer.secho(
+                        "Aborting...", bold=True, fg=typer.colors.BRIGHT_RED,
+                    )
+                    sys.exit()
+                else:
+                    parse = typer.prompt("Enter here")
 
-        finally:
-            retry += 1
+            finally:
+                retry += 1
 
     typer.secho(
         """There must be a problem with your date or the language is not supported yet 😕,you might want to send a feedback with 'seoman feedback' then we can support your language.""",
