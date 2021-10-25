@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "seoman"
-version = "0.1.0"
+version = "0.1.010"
 description = "A Command Line tool that is designed for technical SEOs"
 authors = ["seo.do <yagizcan@zeo.org>"]
 maintainers = ["Yagiz Degirmenci <yagizcan@zeo.org>"]
