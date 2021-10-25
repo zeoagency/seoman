@@ -1,5 +1,6 @@
+from datetime import date, datetime
 from time import strftime, strptime
-from typing import Any, List
+from typing import Any, List, Union
 
 import inquirer  # type: ignore
 import typer  # type: ignore
@@ -17,12 +18,14 @@ def create_selector(key: str, message: str, choices: List) -> Any:
     return answer[key]
 
 
-def create_granularity_selector(start: str, end: str) -> str:
+def create_granularity_selector(start: Union[str, date, datetime], end: Union[str, date, datetime]) -> str:
     """Create a dropdown selector for granularity & frequency."""
 
     start, end = (
-        strftime("%d %b %Y", strptime(start, "%Y-%m-%d")),
-        strftime("%d %b %Y", strptime(end, "%Y-%m-%d")),
+        strftime("%d %b %Y", strptime(start, "%Y-%m-%d")
+                 if isinstance(start, str) else start.timetuple()),
+        strftime("%d %b %Y", strptime(end, "%Y-%m-%d")
+                 if isinstance(end, str) else end.timetuple()),
     )
 
     questions = [

@@ -2,7 +2,7 @@ import json
 import sys
 from datetime import date, datetime, timedelta
 from typing import Dict, List, Optional, Union
-
+import dateparser
 import requests
 import typer  # type: ignore
 
@@ -75,7 +75,8 @@ def granularity_days(
                 0,
                 (
                     (
-                        datetime.strptime(dates[0], "%Y-%m-%d") - timedelta(days=1)
+                        datetime.strptime(
+                            dates[0], "%Y-%m-%d") - timedelta(days=1)
                     ).strftime("%Y-%m-%d")
                 ),
             )
@@ -84,7 +85,8 @@ def granularity_days(
                 0,
                 (
                     (
-                        datetime.strptime(dates[0], "%Y-%m-%d") + timedelta(days=1)
+                        datetime.strptime(
+                            dates[0], "%Y-%m-%d") + timedelta(days=1)
                     ).strftime("%Y-%m-%d")
                 ),
             )
@@ -102,7 +104,8 @@ def granularity_days(
                 0,
                 (
                     (
-                        datetime.strptime(dates[0], "%Y-%m-%d") - timedelta(days=4)
+                        datetime.strptime(
+                            dates[0], "%Y-%m-%d") - timedelta(days=4)
                     ).strftime("%Y-%m-%d")
                 ),
             )
@@ -117,8 +120,8 @@ def granularity_days(
 
 def create_date_range(
     days: Optional[int] = None,
-    start: Optional[str] = None,
-    end: Optional[str] = None,
+    start: Optional[Union[str, date, datetime]] = None,
+    end: Optional[Union[str, date, datetime]] = None,
     granularity: Optional[str] = None,
 ) -> List[str]:
     """
@@ -135,8 +138,10 @@ def create_date_range(
                 day_interval = get_day_granularity(granularity)
 
         new_end, new_start = (
-            datetime.strptime(end, "%Y-%m-%d").date() + timedelta(days=1),
-            datetime.strptime(start, "%Y-%m-%d").date(),
+            datetime.strptime(
+                end, "%Y-%m-%d").date() if isinstance(end, str) else end + timedelta(days=1),
+            datetime.strptime(
+                start, "%Y-%m-%d").date() if isinstance(start, str) else start,
         )
 
         day_diff = (new_end - new_start).days
@@ -228,48 +233,42 @@ def process_date(dt: Union[str, date, datetime], which_date: str) -> Union[str, 
     Process human readable datetime strings, to date objects then to str in %Y-%m-%d fmt.
     2 months ago -> datetime.date(2020, 7, 22) -> '2020-07-22'
     """
-    try:
-        new_dt = requests.post(
-            url="http://167.99.201.160/parse",
-            data=json.dumps({"human_readable": dt}),
-            headers={"accept": "application/json",},
-        ).json()["data"]
+    retry = 0
+    max_retry = 3
+    parse = dt
+    while retry < max_retry:
+        try:
+            new_dt = dateparser.parse(parse).strftime("%Y-%m-%d")
+            return new_dt
 
-    except KeyError:
-        typer.secho(
-            """There must be a problem with your date or the language is not supported yet.""",
-            bold=True,
-            fg=typer.colors.BRIGHT_RED,
-        )
-        typer.secho(
-            """Try entering in YYYY-MM-DD format.""",
-            bold=True,
-            fg=typer.colors.BRIGHT_RED,
-        )
-        enter_new = typer.confirm(
-            f"Do you want to enter a new {which_date} date?", default=True
-        )
-        if enter_new:
-            new_dt = typer.prompt("Enter here")
-            try:
-                new_dt = requests.post(
-                    url="http://167.99.201.160/parse",
-                    data=json.dumps({"human_readable": new_dt}),
-                    headers={"accept": "application/json",},
-                ).json()["data"]
-
-            except KeyError:
+        except Exception:
+            typer.secho(
+                """There must be a problem with your date or the language is not supported yet.""",
+                bold=True,
+                fg=typer.colors.BRIGHT_RED,
+            )
+            typer.secho(
+                """Try entering in YYYY-MM-DD format.""",
+                bold=True,
+                fg=typer.colors.BRIGHT_RED,
+            )
+            enter_new = typer.confirm(
+                f"Do you want to enter a new {which_date} date?", default=True
+            )
+            if enter_new is False:
                 typer.secho(
-                    """There must be a problem with your date or the language is not supported yet 😕,you might want to send a feedback with 'seoman feedback' then we can support your language.""",
-                    bold=True,
-                    fg=typer.colors.BRIGHT_RED,
+                    "Aborting...", bold=True, fg=typer.colors.BRIGHT_RED,
                 )
                 sys.exit()
+            else:
+                parse = typer.prompt("Enter here")
 
-        if enter_new is False:
-            typer.secho(
-                "Aborting...", bold=True, fg=typer.colors.BRIGHT_RED,
-            )
-            sys.exit()
+        finally:
+            retry += 1
 
-    return new_dt
+    typer.secho(
+        """There must be a problem with your date or the language is not supported yet 😕,you might want to send a feedback with 'seoman feedback' then we can support your language.""",
+        bold=True,
+        fg=typer.colors.BRIGHT_RED,
+    )
+    sys.exit()
